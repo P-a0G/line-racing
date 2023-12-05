@@ -2,19 +2,13 @@ import random
 import numpy as np
 from random import randint
 import time
+from utils import load_bar
 
 height = 20
 width = 30
 
 directions = {'UP': (0, -1), 'DOWN': (0, 1), 'LEFT': (-1, 0), 'RIGHT': (1, 0)}
 actions = list(directions.values())
-
-
-def load_bar(i, n):
-    end = f"{i + 1}/{n}"
-    i = (i + 1) * 100 // n
-    bar = f"[{'■' * i}{' ' * (100 - i)}]\t {end}"
-    return bar
 
 
 class Environment:
