@@ -7,8 +7,8 @@ from utils import load_bar
 height = 20
 width = 30
 
-directions = {'UP': (0, -1), 'DOWN': (0, 1), 'LEFT': (-1, 0), 'RIGHT': (1, 0)}
-actions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+directions = {'UP': (-1, 0), 'RIGHT': (0, 1), 'DOWN': (1, 0), 'LEFT': (0, -1)}
+actions = [(-1, 0), (0, 1), (1, 0), (0, -1)]
 
 
 class Game:
