@@ -8,7 +8,7 @@ height = 20
 width = 30
 
 directions = {'UP': (0, -1), 'DOWN': (0, 1), 'LEFT': (-1, 0), 'RIGHT': (1, 0)}
-actions = list(directions.values())
+actions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
 
 class Game:
@@ -159,7 +159,7 @@ class Game:
 
 
 class Player:
-    def __init__(self, is_human, idx, trainable=True):
+    def __init__(self, is_human, idx=-1, trainable=True):
         self.is_human = is_human
         self.idx = idx
         self.history = []
@@ -195,11 +195,11 @@ class Player:
         return 0  # todo
 
     def play(self, grid, player_pos):
-        assert player_pos[self.idx] is not None, "Error player is dead"
-
         if self.is_human:
             # human action
             return int(input("$>"))
+
+        assert player_pos[self.idx] is not None, "Error player is dead"
 
         if random.uniform(0, 1) < self.eps:
             # random action
@@ -244,7 +244,7 @@ class Player:
 
         return possible_moves
 
-    def get_state(self):
+    def get_state(self, grid, player_pos):
         # todo
         # self.grid
         # self.player_pos
@@ -263,7 +263,7 @@ def play(game, p1, p2, p3=None, train=True):
             p += 1
 
         if players[p % nb_players].is_human:
-            game.display()
+            game.show()
 
         action = players[p % nb_players].play(game.grid, game.player_pos)
         n_state, reward = game.step(action)
@@ -307,13 +307,13 @@ if __name__ == '__main__':
     random_player = Player(is_human=False, idx=2, trainable=False)
 
     # Train the agent
-    n = 10_000
+    n = 1
     start = time.time()
     for i in range(n):
         print(f'\rSimulating games: {load_bar(i, n)}', end="")
         if i % 10 == 0:
-            p1.eps = 1  # max(p1.eps*0.996, 0.05)  # todo remove after debug
-            p2.eps = 1  # max(p2.eps*0.996, 0.05)  # todo remove after debug
+            p1.eps = max(p1.eps*0.996, 0.05)
+            p2.eps = max(p2.eps*0.996, 0.05)
         play(game, p1, p2)
     print("\n")
 
@@ -339,7 +339,7 @@ if __name__ == '__main__':
     # print("Simulation time:", time.time() - start, "s")
 
     # # Play agains us
-    # human player
+    # # human player
     # human = Player(is_human=True, trainable=False)
     # play(game, p1, human, train=False)
 
