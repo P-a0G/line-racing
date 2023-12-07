@@ -181,8 +181,9 @@ class Player:
 
         state = self.get_state(grid, player_pos)
 
-        actions = self.get_moves(grid, player_pos)
+        acts = self.get_moves(grid, player_pos)
 
+        action = random.choice(acts)
         # vmin = None
         # vi = None
         # for i in range(0, 3):
@@ -192,7 +193,7 @@ class Player:
         #         vi = i
         # return actions[vi if vi is not None else 1]
 
-        return 0  # todo
+        return action
 
     def play(self, grid, player_pos):
         if self.is_human:
