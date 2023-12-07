@@ -237,9 +237,9 @@ class Player:
     def get_moves(self, grid, player_pos):
         possible_moves = []
 
-        if player_pos[self.idx] is None:
+        if player_pos is None:
             assert False, f"Error idx={self.idx} player_pos={player_pos}"
-        x, y = player_pos[self.idx]
+        x, y = player_pos
         for k in range(4):
             dx, dy = actions[k]
             if height > x + dx > 0 and width > y + dy > 0 and grid[x + dx][y + dy] == 0:
@@ -256,10 +256,10 @@ class Player:
 
 
 def play(game, p1, p2, p3=None, train=True):
-    state = game.reset()
+    game.reset()
     players = [p1, p2]
-    random.shuffle(players)
-    p = randint(0, len(players) - 1)  # random first player
+    random.shuffle(players)  # random player order
+    p = 0
     nb_players = len(players)
     while not game.is_finished():
         if game.player_pos[p % nb_players] is None:  # player is dead
@@ -268,7 +268,7 @@ def play(game, p1, p2, p3=None, train=True):
         if players[p % nb_players].is_human:
             game.show()
 
-        action = players[p % nb_players].play(game.grid, game.player_pos)
+        action = players[p % nb_players].play(game.grid, game.player_pos[game.current_player])
         n_state, reward = game.step(action)
 
         # #  A player lost
