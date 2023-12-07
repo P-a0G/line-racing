@@ -341,5 +341,6 @@ if __name__ == '__main__':
     # # Play agains us
     # # human player
     # human = Player(is_human=True, trainable=False)
+    # p1.eps = 0  # no more greedy steps
     # play(game, p1, human, train=False)
 
