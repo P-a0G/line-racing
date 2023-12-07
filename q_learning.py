@@ -198,7 +198,9 @@ class Player:
     def play(self, grid, player_pos):
         if self.is_human:
             # human action
-            return int(input("$>"))
+            action = int(input("$>"))
+            print("chosen action:", list(directions.keys())[action])
+            return action
 
         assert player_pos[self.idx] is not None, "Error player is dead"
 
