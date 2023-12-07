@@ -202,7 +202,7 @@ class Player:
             print("chosen action:", list(directions.keys())[action])
             return action
 
-        assert player_pos[self.idx] is not None, "Error player is dead"
+        assert player_pos is not None, "Error player is dead"
 
         if random.uniform(0, 1) < self.eps:
             # random action
