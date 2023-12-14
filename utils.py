@@ -1,12 +1,18 @@
 import json
-
+import time
+from datetime import timedelta
 import numpy as np
 
 
-def load_bar(i, n):
+def load_bar(i, n, start_time=None):
     end = f"{i + 1}/{n}"
-    i = (i + 1) * 100 // n
-    bar = f"[{'■' * i}{' ' * (100 - i)}]\t {end}"
+    j = (i + 1) * 100 // n
+    bar = f"[{'■' * j}{' ' * (100 - j)}]\t {end}"
+    if start_time is not None and i > 0:
+        now = time.time()
+        tot_time = (n / i) * (now - start_time) + start_time
+        remaining_time = int(tot_time - now)
+        bar += f" [{timedelta(seconds=int(now - start_time))} < {timedelta(seconds=remaining_time)}]"
     return bar
 
 
