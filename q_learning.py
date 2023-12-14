@@ -359,7 +359,7 @@ if __name__ == '__main__':
     random_player = Player(is_human=False, idx=2, trainable=False)
 
     # Train the agent
-    n = 100_000
+    n = 750_000
     start = time.time()
     game_turns = []
     avr_turn_list = []
@@ -369,9 +369,9 @@ if __name__ == '__main__':
             avr_turn_list.append(avr_turns)
         else:
             avr_turns = None
-        print(f'\rSimulating games: {load_bar(i, n, start_time=start)}, avr turn = {avr_turns}', end="")
-        if i % 10 == 0:
-            p1.eps = max(p1.eps*0.996, 0.05)
+        print(f'\rSimulating games: {load_bar(i, n, start_time=start)}, avr turn = {avr_turns}, eps={p1.eps}', end="")
+        if i % 1000 == 0:
+            p1.eps = max(p1.eps*0.996, 0.05)  # probability to make a random move
             p2.eps = max(p2.eps*0.996, 0.05)
         nb_turns = play(game, p1, p2)
         game_turns.append(nb_turns)
