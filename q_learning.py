@@ -15,8 +15,8 @@ actions = [(-1, 0), (0, 1), (1, 0), (0, -1)]
 
 class Game:
     def __init__(self):
-        self.height = 20
-        self.width = 30
+        self.height = height
+        self.width = width
 
         self.grid = np.zeros((self.height, self.width))
 
@@ -168,24 +168,23 @@ class Player:
         self.lose_nb = 0
         self.rewards = []
 
-    def greedy_step(self, grid, player_pos, my_idx):  # todo
+    def greedy_step(self, grid, player_pos, my_idx):
         # greedy step
-
-        state = self.get_state(grid, player_pos, my_idx)
 
         acts = self.get_moves(grid, player_pos[my_idx])
 
-        action = random.choice(acts)
-        # vmin = None
-        # vi = None
-        # for i in range(0, 3):
-        #     a = actions[i]
-        #     if state - a > 0 and (vmin is None or vmin > self.V[state - a]):
-        #         vmin = self.V[state - a]
-        #         vi = i
-        # return actions[vi if vi is not None else 1]
+        if len(acts) == 1:
+            return acts[0]
 
-        return action
+        best_score = -100
+        best_action = None
+        for a in acts:
+            new_state = self.get_next_state(grid, player_pos, my_idx, a)
+            if self.V.get(new_state, 0.0) > best_score:
+                best_score = self.V.get(new_state, 0.0)
+                best_action = a
+
+        return best_action
 
     def play(self, grid, player_pos, my_idx):
         if self.is_human:
@@ -275,6 +274,53 @@ class Player:
 
         return encoded_map
 
+    @staticmethod
+    def get_next_state(grid, player_pos, my_idx, action):
+        encoded_map = []
+
+        dx, dy = actions[action]
+        x, y = player_pos[my_idx]
+        encoded_map.append(x + dx)
+        encoded_map.append(y + dy)
+
+        # load player positions
+        for a in range(1, 3):
+            if player_pos[(my_idx + a) % 3] is None:
+                p_x, p_y = -1, -1
+            else:
+                p_x, p_y = player_pos[(my_idx + a) % 3]
+
+            encoded_map.append(p_x)
+            encoded_map.append(p_y)
+
+        # load the map
+        for u in range(width):
+            encoded_line_p1 = 0
+            encoded_line_p2 = 0
+            encoded_line_p3 = 0
+            for v in range(height):
+                if u == x + dx and v == y + dy:
+                    if my_idx == 1:
+                        encoded_line_p1 += 1 << u
+                    elif my_idx == 2:
+                        encoded_line_p2 += 1 << u
+                    else:
+                        encoded_line_p3 += 1 << u
+                elif grid[v][u] == 1:
+                    encoded_line_p1 += 1 << u
+                elif grid[v][u] == 2:
+                    encoded_line_p2 += 1 << u
+                elif grid[v][u] == 3:
+                    encoded_line_p3 += 1 << u
+
+            encoded_map.append(encoded_line_p1)
+            encoded_map.append(encoded_line_p2)
+            encoded_map.append(encoded_line_p3)
+
+        encoded_map = tuple(encoded_map)
+
+        return encoded_map
+
     def save_state_dict(self, pth):
         with open(pth, "w") as f:
             for k, v in self.V.items():
@@ -291,7 +337,7 @@ class Player:
                 self.V[k] = float(v)
 
 
-def play(game, p1, p2, p3=None, train=True):
+def play(game, p1, p2, p3=None, train=True):  # todo p3
     game.reset()
     players = [p1, p2]
     random.shuffle(players)  # random player order
