@@ -43,14 +43,20 @@ def test_advantage_is_mean_zero_over_the_legal_set():
     assert torch.allclose(a.mean(dim=-1), torch.zeros(B, K), atol=1e-4)
 
 
-def test_fully_boxed_in_does_not_crash_and_argmax_picks_up():
+def test_fully_boxed_in_stays_finite_and_small_not_the_illegal_sentinel():
+    # Every action illegal (fully boxed in) must NOT fall back to the -1e9
+    # illegal-action sentinel -- that value still gets gathered as a TD
+    # target/prediction for this transition in learner.py, and -1e9 there
+    # caused a real catastrophic loss blowup before this was fixed.
     net = make_net()
     grid = torch.randn(1, NUM_CHANNELS, HEIGHT, WIDTH)
     legal = torch.zeros(1, NUM_ACTIONS, dtype=torch.bool)  # no legal move at all
     taus = torch.rand(1, 4)
     out = net(grid, legal, taus)
     assert torch.isfinite(out["q"]).all()
-    assert out["q"][0, 0].argmax().item() == 0  # ties broken to index 0 == UP
+    assert out["q"].abs().max().item() < 100  # nowhere near the -1e9 sentinel used for the "some legal" case
+    # mean-centered over all 4 (not over an empty legal set) -- advantage sums to ~0
+    assert torch.allclose((out["q"] - out["v"][:, :, None]).mean(dim=-1), torch.zeros(1, 4), atol=1e-4)
 
 
 def test_eval_mode_is_deterministic_noisenet_collapses_to_mu():

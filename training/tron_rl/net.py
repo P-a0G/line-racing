@@ -137,10 +137,13 @@ class DuelingIQNNet(nn.Module):
         Returns dict with 'v' (B,K) and 'q' (B,K,NUM_ACTIONS), the latter
         already dueling-combined and mean-normalized over the legal action
         set (a true advantage, not an arbitrary per-action offset), with
-        every illegal action driven to -1e9. If every action is illegal
-        (fully boxed in), all four end up tied at v-1e9 and a downstream
-        argmax deterministically returns UP -- there's no legal move either
-        way, matching legacy/new_IA.py's own boxed-in fallback.
+        every illegal action driven to -1e9 -- EXCEPT when every action is
+        illegal (fully boxed in), where all four instead get a plain
+        mean-centered advantage over the full 4 (see the comment at that
+        branch for why: this transition still gets trained on, and -1e9
+        would poison its TD target/prediction, not just a decision-time
+        argmax). Which direction wins that argmax is inconsequential either
+        way -- every option is equally fatal.
         """
         B, K = taus.shape
         trunk_out = self.trunk(grid)                                  # (B,C,H,W)
@@ -156,7 +159,20 @@ class DuelingIQNNet(nn.Module):
         legal_count = legal_mask.sum(dim=-1).clamp(min=1).to(grid.dtype)  # (B,)
         sum_a = torch.where(legal, a_raw, torch.zeros_like(a_raw)).sum(dim=-1)  # (B,K)
         mean_a = sum_a / legal_count[:, None]
-        a = torch.where(legal, a_raw - mean_a[:, :, None], torch.full_like(a_raw, -1e9))
+        a_masked = torch.where(legal, a_raw - mean_a[:, :, None], torch.full_like(a_raw, -1e9))
+
+        # When EVERY action is illegal (fully boxed in -- this does happen in
+        # real self-play, not just a theoretical edge case), fall back to a
+        # plain mean-centered advantage over all 4 instead of -1e9: this
+        # transition still gets replayed and its taken action still gets
+        # gathered for the TD target (learner.py), so forcing every entry to
+        # -1e9 would poison that target/prediction with a sentinel 9 orders
+        # of magnitude past any real reward -- which is exactly what caused
+        # a catastrophic (10^8) loss blowup in early real-data testing,
+        # traced to this one gather. Which direction gets argmax'd here is
+        # otherwise inconsequential: every option is equally fatal.
+        any_legal = legal_mask.any(dim=-1)[:, None, None]  # (B,1,1)
+        a = torch.where(any_legal, a_masked, a_raw - a_raw.mean(dim=-1, keepdim=True))
 
         q = v[:, :, None] + a
         return {"v": v, "q": q}

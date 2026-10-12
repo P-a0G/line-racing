@@ -101,9 +101,10 @@ def forward(grid, legal_mask, taus, weights):
     """grid: (NUM_CHANNELS,20,30); legal_mask: (4,) bool; taus: (K,) float
     in [0,1]. Returns dict with 'v' (K,) and 'q' (K,4), dueling-combined and
     mean-normalized over the legal actions exactly like net.py's torch
-    version (illegal actions driven to -1e9; if none are legal, all four tie
-    and a downstream argmax picks index 0 == UP, matching
-    legacy/new_IA.py's own boxed-in fallback)."""
+    version (illegal actions driven to -1e9, EXCEPT when none are legal at
+    all, where this falls back to a plain mean-centered advantage over all
+    4 instead -- see net.py's forward() for why that case needs different
+    handling)."""
     K = len(taus)
     trunk_out = trunk_forward(grid, weights["trunk"])  # (C,H,W)
     phi = iqn_embedding(taus, weights["iqn"])            # (K,C)
@@ -121,6 +122,17 @@ def forward(grid, legal_mask, taus, weights):
     legal_count = max(int(legal_mask.sum()), 1)
     sum_a = np.where(legal_mask[None], a_raw, 0.0).sum(axis=1)
     mean_a = sum_a / legal_count
-    a = np.where(legal_mask[None], a_raw - mean_a[:, None], -1e9)
+    a_masked = np.where(legal_mask[None], a_raw - mean_a[:, None], -1e9)
+
+    # Mirrors net.py's torch forward exactly: when every action is illegal
+    # (fully boxed in), fall back to a plain mean-centered advantage over
+    # all 4 rather than -1e9 -- this transition still gets trained on in
+    # learner.py, and -1e9 would poison its TD target/prediction, not just a
+    # decision-time argmax (which direction wins there is inconsequential
+    # either way -- every option is equally fatal).
+    if legal_mask.any():
+        a = a_masked
+    else:
+        a = a_raw - a_raw.mean(axis=1, keepdims=True)
 
     return {"v": v, "q": v[:, None] + a}

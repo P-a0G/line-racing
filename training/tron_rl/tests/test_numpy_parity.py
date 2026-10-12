@@ -69,7 +69,7 @@ def test_forward_matches_torch_fully_boxed_in():
                      torch.from_numpy(taus).unsqueeze(0).float())
 
     np.testing.assert_allclose(out_np["q"], out_t["q"][0].numpy(), atol=1e-3)
-    assert out_np["q"][0].argmax() == 0  # ties resolve to UP, both sides
+    assert np.abs(out_np["q"]).max() < 100  # the mean-centered fallback, not the -1e9 sentinel
 
 
 def test_forward_without_gpb_blocks():
