@@ -39,6 +39,7 @@ class Learner:
                  tau_m=0.03, munch_alpha=0.9, munch_clip=(-1.0, 0.0),
                  device="cpu"):
         net_kwargs = net_kwargs or {}
+        self.net_kwargs = net_kwargs  # kept so collect.py can build an architecturally-identical scratch net
         self.device = torch.device(device)
         self.online = DuelingIQNNet(**net_kwargs).to(self.device)
         self.target = DuelingIQNNet(**net_kwargs).to(self.device)
