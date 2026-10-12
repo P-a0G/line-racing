@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Compiled C++ extension / build artifacts
+*.so
+*.o
+simulator/test_engine
+simulator/test_heuristic
+simulator/test_voronoi
+simulator/test_pybind
+
+# Training outputs
+training/tron_rl/run*/
+training/*.venv/
+
+# Generated submission artifacts
+submission/tron_infer/weights_blob.py
+submission/submission.py
+
+# IDE
+.idea/
+
+# Legacy nested repo (kept as a separate, untouched git checkout)
+reinforcement_learning/
+cpp/
